@@ -24,6 +24,8 @@ class SimpleGlitchIop : public Iop
     float glitch_block_height;
     float glitch_intensity;
     float glitch_freq;
+    float glitch_blocks_offset;
+    float glitch_intensity_mult;
 public:
     //constructor
     SimpleGlitchIop(Node *node);
