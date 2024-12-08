@@ -80,7 +80,6 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row& out
         if (lineNoise < glitch_freq)
         {
             float noiseVal = randFromY(blockIndex, glitch_seed);
-            // int offset = (int)((noiseVal - 0.5f) * glitch_intensity * 2.0f);
             int offset = (int)((noiseVal - glitch_blocks_offset) * glitch_intensity * glitch_intensity_mult);
 
             for (int X = x; X < r; X++)
