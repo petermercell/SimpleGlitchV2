@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.8)
-project(SimpleGlitchV2)
+project(SimpleGlitch2)
 
 set(CMAKE_CXX_FLAGS "/arch:AVX /EHsc")
 set(CMAKE_CXX_STANDARD 17)

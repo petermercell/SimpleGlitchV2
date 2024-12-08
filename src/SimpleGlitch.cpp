@@ -88,4 +88,4 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row& out
 }
 
 static Iop *build(Node *node) { return new NukeWrapper(new SimpleGlitchIop(node)); }
-const Iop::Description SimpleGlitchIop::d("SimpleGlitchV2", "Filter/SimpleGlitchV2", build);
+const Iop::Description SimpleGlitchIop::d("SimpleGlitch2", "Filter/SimpleGlitch2", build);

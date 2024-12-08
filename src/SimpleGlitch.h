@@ -15,8 +15,8 @@ using namespace DD::Image;
 #include "DDImage/Knobs.h"
 #include "DDImage/Format.h"
 
-static const char *const CLASS = "SimpleGlitchV2";
-static const char *const HELP = "";
+static const char *const CLASS = "SimpleGlitch2";
+static const char *const HELP = "This node applies a horizontal glitch effect to the image lines.";
 
 class SimpleGlitchIop : public Iop
 {
