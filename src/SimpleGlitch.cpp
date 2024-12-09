@@ -16,39 +16,39 @@ inline float fract(float x)
 }
 
 // Random Noise
-inline float randFromY(int y, float glitch_seed)
+inline float randomNoise(int y, float noise_seed)
 {
-    return fract(std::sin((float)y * 12.9898f + glitch_seed) * 43758.5453f);
+    return fract(std::sin((float)y * 12.9898f + noise_seed) * 43758.5453f);
 }
 
 SimpleGlitchIop::SimpleGlitchIop(Node *node) : Iop(node)
 {
-    glitch_seed = 235.0f;
-    glitch_block_height = 4.0f;
-    glitch_intensity = 2.0f;
-    glitch_freq = 1.0f;
-    glitch_blocks_offset = 0.5f;
-    glitch_intensity_mult = 2.0f;
+    noise_seed = 235.0f;
+    noise_height = 4.0f;
+    noise_intensity = 2.0f;
+    noise_freq = 1.0f;
+    noise_offset = 0.5f;
+    noise_mult = 2.0f;
 }
 
 void SimpleGlitchIop::knobs(Knob_Callback f)
 {
-    Float_knob(f, &glitch_seed, "seed");
+    Float_knob(f, &noise_seed, "seed");
     Tooltip(f, "Random seed for the glitch pattern.");
     SetRange(f, 1, 1000);
-    Float_knob(f, &glitch_block_height, "block_height", "block height");
+    Float_knob(f, &noise_height, "block_height", "block height");
     Tooltip(f, "Height in lines for each glitch block.");
     SetRange(f, 1, 20);
-    Float_knob(f, &glitch_intensity, "intensity");
+    Float_knob(f, &noise_intensity, "intensity");
     Tooltip(f, "Intensity of the horizontal displacement.");
     SetRange(f, 1, 10);
-    Float_knob(f, &glitch_intensity_mult, "multiplier");
+    Float_knob(f, &noise_mult, "multiplier");
     Tooltip(f, "Intensity Multiplier.");
     SetRange(f, 1, 10);
-    Float_knob(f, &glitch_freq, "frequency");
+    Float_knob(f, &noise_freq, "frequency");
     Tooltip(f, "Frequency at which glitch lines occur.");
     SetRange(f, 0, 1);
-    Float_knob(f, &glitch_blocks_offset, "offset");
+    Float_knob(f, &noise_offset, "offset");
     Tooltip(f, "General image Offset.");
     SetRange(f, 0, 1);
 }
@@ -78,9 +78,9 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row& out
     const int format_h = format.h();
 
     // Set the size of the glitch block in y
-    int blockIndex = y / glitch_block_height;
+    int blockIndex = y / noise_height;
     // Set the Noise
-    float lineNoise = randFromY(blockIndex, glitch_seed);
+    float lineNoise = randomNoise(blockIndex, noise_seed);
 
     // Iterate each Channel
     foreach (z, channels)
@@ -89,10 +89,10 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row& out
         const float *inptr = in[z];
         float *outptr = out.writable(z);
 
-        // Glitch Frequency (Amount)
-        if (lineNoise < glitch_freq)
+        // Noise Frequency (Amount)
+        if (lineNoise < noise_freq)
         {
-            int offset = (int)((lineNoise - glitch_blocks_offset) * glitch_intensity * glitch_intensity_mult); // block offset
+            int offset = (int)((lineNoise - noise_offset) * noise_intensity * noise_mult); // block offset
 
             for (int X = x; X < r; X++)
             {

@@ -19,12 +19,12 @@ static const char *const HELP = "This node applies a horizontal glitch effect to
 
 class SimpleGlitchIop : public Iop
 {
-    float glitch_seed;
-    float glitch_block_height;
-    float glitch_intensity;
-    float glitch_freq;
-    float glitch_blocks_offset;
-    float glitch_intensity_mult;
+    float noise_seed;
+    float noise_height;
+    float noise_intensity;
+    float noise_freq;
+    float noise_offset;
+    float noise_mult;
 public:
     //constructor
     SimpleGlitchIop(Node *node);
