@@ -36,7 +36,7 @@ void SimpleGlitchIop::knobs(Knob_Callback f)
     Float_knob(f, &noise_seed, "seed");
     Tooltip(f, "Random seed for the glitch pattern.");
     SetRange(f, 1, 1000);
-    Float_knob(f, &noise_height, "block_height", "block height");
+    Float_knob(f, &noise_height, "noise_height", "noise height");
     Tooltip(f, "Height in lines for each glitch block.");
     SetRange(f, 1, 20);
     Float_knob(f, &noise_intensity, "intensity");
