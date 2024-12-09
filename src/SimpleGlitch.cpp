@@ -15,6 +15,7 @@ inline float fract(float x)
     return x - std::floor(x);
 }
 
+// Random Noise
 inline float randFromY(int y, float glitch_seed)
 {
     return fract(std::sin((float)y * 12.9898f + glitch_seed) * 43758.5453f);
@@ -65,32 +66,43 @@ void SimpleGlitchIop::_request(int x, int y, int r, int t, ChannelMask channels,
 
 void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row& out)
 {
+    // Get original pixel values from the current row
     Row in(x, r);
     in.get(input0(), y, x, r, channels);
 
-    const int width = input0().info().w();
+    // Get the format values from the input0
+    Format format = input0().format();
+    const int format_x = format.x();
+    const int format_y = format.y();
+    const int format_w = format.w();
+    const int format_h = format.h();
+
+    // Set the size of the glitch block in y
     int blockIndex = y / glitch_block_height;
+    // Set the Noise
     float lineNoise = randFromY(blockIndex, glitch_seed);
 
+    // Iterate each Channel
     foreach (z, channels)
     {
+        // in & out pixel pointers
         const float *inptr = in[z];
         float *outptr = out.writable(z);
 
+        // Glitch Frequency (Amount)
         if (lineNoise < glitch_freq)
         {
-            float noiseVal = randFromY(blockIndex, glitch_seed);
-            int offset = (int)((noiseVal - glitch_blocks_offset) * glitch_intensity * glitch_intensity_mult);
+            int offset = (int)((lineNoise - glitch_blocks_offset) * glitch_intensity * glitch_intensity_mult); // block offset
 
             for (int X = x; X < r; X++)
             {
-                int newX = std::clamp(X + offset, 0, width - 1);
-                outptr[X] = inptr[newX];
+                int newX = std::clamp(X + offset, 0, format_w - 1); // clamp offset value between 0 and the image width minus 1 pixel
+                outptr[X] = inptr[newX]; // apply the offset to the incoming pixel value
             }
         }
         else
         {
-            std::copy(in[z] + x, in[z] + r, out.writable(z) + x);
+            std::copy(in[z] + x, in[z] + r, out.writable(z) + x); // just copy the same pixel values to the current row (No pixel changes)
         }
     }
 }

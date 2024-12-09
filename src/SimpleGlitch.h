@@ -6,7 +6,6 @@
   Provided "as is" without any warranty.
 */
 
-// #include "DDImage/Iop.h"
 #include "DDImage/Iop.h"
 #include "DDImage/NukeWrapper.h"
 using namespace DD::Image;
