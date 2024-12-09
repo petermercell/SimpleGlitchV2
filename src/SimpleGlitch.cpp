@@ -4,8 +4,6 @@
   Copyright (c) 2024 Gonzalo Rojas
   This plugin is free to use, modify, and distribute.
   Provided "as is" without any warranty.
-
-  TODO: poner en 0.0f todos los pixeles que esten fuera del bloque con offset
 */
 
 #include "SimpleGlitch.h"
