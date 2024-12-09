@@ -4,11 +4,16 @@
   Copyright (c) 2024 Gonzalo Rojas
   This plugin is free to use, modify, and distribute.
   Provided "as is" without any warranty.
+
+  TODO: poner en 0.0f todos los pixeles que esten fuera del bloque con offset
 */
 
 #include "SimpleGlitch.h"
 #include <cmath>
 #include <algorithm>
+
+// Macros
+constexpr int BBOX_SIZE = 1;
 
 inline float fract(float x)
 {
@@ -42,7 +47,7 @@ void SimpleGlitchIop::knobs(Knob_Callback f)
     Float_knob(f, &noise_intensity, "intensity");
     Tooltip(f, "Intensity of the horizontal displacement.");
     SetRange(f, 1, 10);
-    Float_knob(f, &noise_mult, "multiplier");
+    Float_knob(f, &noise_mult, "multiply");
     Tooltip(f, "Intensity Multiplier.");
     SetRange(f, 1, 10);
     Float_knob(f, &noise_freq, "frequency");
@@ -61,11 +66,19 @@ void SimpleGlitchIop::_validate(bool for_real)
 
 void SimpleGlitchIop::_request(int x, int y, int r, int t, ChannelMask channels, int count)
 {
-    input0().request(x, y, r, t, channels, count);
+    input0().request(x - BBOX_SIZE, y - BBOX_SIZE, r + BBOX_SIZE, t + BBOX_SIZE, channels, count);
 }
 
-void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row& out)
+void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row &out)
 {
+    // make a tile for the current row
+    Tile tile(input0(), x - BBOX_SIZE, y - BBOX_SIZE, r + BBOX_SIZE, y + BBOX_SIZE, channels);
+    if (aborted())
+    {
+        std::cerr << "Aborted!";
+        return;
+    }
+
     // Get original pixel values from the current row
     Row in(x, r);
     in.get(input0(), y, x, r, channels);
@@ -85,19 +98,18 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row& out
     // Iterate each Channel
     foreach (z, channels)
     {
-        // in & out pixel pointers
         const float *inptr = in[z];
         float *outptr = out.writable(z);
 
-        // Noise Frequency (Amount)
+        // Noise Frequency (threshold)
         if (lineNoise < noise_freq)
         {
             int offset = (int)((lineNoise - noise_offset) * noise_intensity * noise_mult); // block offset
 
             for (int X = x; X < r; X++)
             {
-                int newX = std::clamp(X + offset, 0, format_w - 1); // clamp offset value between 0 and the image width minus 1 pixel
-                outptr[X] = inptr[newX]; // apply the offset to the incoming pixel value
+                int newX = tile.clampx(X + offset);
+                outptr[X] = inptr[newX];
             }
         }
         else
