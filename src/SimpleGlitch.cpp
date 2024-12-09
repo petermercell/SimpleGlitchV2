@@ -83,13 +83,6 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row &out
     Row in(x, r);
     in.get(input0(), y, x, r, channels);
 
-    // Get the format values from the input0
-    Format format = input0().format();
-    const int format_x = format.x();
-    const int format_y = format.y();
-    const int format_w = format.w();
-    const int format_h = format.h();
-
     // Set the size of the glitch block in y
     int blockIndex = y / noise_height;
     // Set the Noise
