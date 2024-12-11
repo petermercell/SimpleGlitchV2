@@ -17,19 +17,25 @@ This node applies a horizontal glitch effect to the image lines.
 ![Plugin Options](path/to/options_image.png)
 
 ### Knob Explanations
-1. **Knob 1 (Knob Name):**
+1. **Seed:**
    - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
-2. **Knob 2 (Knob Name):**
+2. **Noise Height:**
    - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
-3. **Knob 3 (Knob Name):**
+3. **Intensity:**
    - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
-*(Continue with the rest of the knobs, if applicable.)*
+4. **Frequency:**
+   - ⚙️ Function: [Brief explanation of what this knob does].
+   - Example: [Description of use case or recommended values].
+
+4. **Offset:**
+   - ⚙️ Function: [Brief explanation of what this knob does].
+   - Example: [Description of use case or recommended values].
 
 ---
 
@@ -55,4 +61,4 @@ This node applies a horizontal glitch effect to the image lines.
 
 ---
 
-🚀 You're all set! Start using **[Plugin Name]** in your compositions now.
+🚀 You're all set! Start using **SimpleGlitch2** in your compositions now.
