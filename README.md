@@ -17,19 +17,22 @@ This node applies a horizontal glitch effect to the image lines.
 
 ### Knob Explanations
 1. **Seed:**
-   - Example: [Description of use case or recommended values].
+   - Random seed for the glitch pattern.
 
-2. **Noise Height:**
-   - Example: [Description of use case or recommended values].
+2. **Effect Only:**
+   - Outputs only the glitch effect.
 
-3. **Intensity:**
-   - Example: [Description of use case or recommended values].
+3. **Noise Height:**
+   - Height in lines for each glitch block.
 
-4. **Frequency:**
-   - Example: [Description of use case or recommended values].
+4. **Intensity:**
+   - Intensity of the horizontal displacement.
 
-4. **Offset:**
-   - Example: [Description of use case or recommended values].
+5. **Frequency:**
+   - Frequency at which glitch lines occur.
+
+6. **Offset:**
+   - General image Offset.
 
 ---
 
