@@ -14,7 +14,7 @@ This node applies a horizontal glitch effect to the image lines.
 
 ## Options
 
-![Plugin Options](path/to/options_image.png)
+![Plugin Options](assets/plugin_knobs.png)
 
 ### Knob Explanations
 1. **Seed:**
