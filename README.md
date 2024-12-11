@@ -1,21 +1,18 @@
-# Project Name
+# SimpleGlitch2
 
 ## Description
-🎬✨ This plugin for Nuke, **[Plugin Name]**, is designed to [brief description of what the plugin does]. It provides advanced tools for [specific task], enabling compositors to optimize their workflows and achieve more precise results.
+This node applies a horizontal glitch effect to the image lines.
 
 ---
 
 ## Examples
-🎥🎞️ Below are video examples showcasing how the plugin works:
 
 - [![Example 1](path/to/thumbnail_image1.png)](path/to/example1.mp4 "Example 1 - Video description")
 - [![Example 2](path/to/thumbnail_image2.png)](path/to/example2.mp4 "Example 2 - Video description")
 
-Click on the thumbnails to watch the demo videos.
-
 ---
 
-## Plugin Options
+## Options
 
 ![Plugin Options](path/to/options_image.png)
 
@@ -39,7 +36,7 @@ Click on the thumbnails to watch the demo videos.
 ## Compatibility
 🖥️ This plugin is compatible with the following versions of Nuke:
 
-- **Nuke 13.0 and above**
+- **Nuke 12.1 and above**
 
 ---
 
