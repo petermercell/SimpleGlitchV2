@@ -7,7 +7,7 @@ This node applies a horizontal glitch effect to the image lines.
 
 ## Examples
 
-- ![Example 1](assets/glitch_example1.gif)
+![Example 1](assets/glitch_example1.gif)
 
 ---
 
