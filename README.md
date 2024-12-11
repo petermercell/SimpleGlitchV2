@@ -18,23 +18,18 @@ This node applies a horizontal glitch effect to the image lines.
 
 ### Knob Explanations
 1. **Seed:**
-   - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
 2. **Noise Height:**
-   - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
 3. **Intensity:**
-   - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
 4. **Frequency:**
-   - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
 4. **Offset:**
-   - ⚙️ Function: [Brief explanation of what this knob does].
    - Example: [Description of use case or recommended values].
 
 ---
