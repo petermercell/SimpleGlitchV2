@@ -5,8 +5,6 @@
   This plugin is free to use, modify, and distribute.
   Provided "as is" without any warranty.
 
-    TODO: Controlar el tamaño en x de cada bloque.
-
 */
 
 #include "SimpleGlitch.h"
