@@ -24,7 +24,6 @@ class SimpleGlitchIop : public Iop
     float noise_intensity;
     float noise_freq;
     float noise_offset;
-    float noise_mult;
     bool solo_effect;
     int _bbox;
 public:

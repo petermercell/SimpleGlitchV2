@@ -6,7 +6,6 @@
   Provided "as is" without any warranty.
 
     TODO: Controlar el tamaño en x de cada bloque.
-    TODO: Solo Effect
 
 */
 
@@ -43,7 +42,6 @@ SimpleGlitchIop::SimpleGlitchIop(Node *node) : Iop(node)
     _bbox = 1;
     noise_freq = 1.0f;
     noise_offset = 0.5f;
-    noise_mult = 2.0f;
     solo_effect = false;
 }
 
@@ -60,9 +58,6 @@ void SimpleGlitchIop::knobs(Knob_Callback f)
     Float_knob(f, &noise_intensity, "intensity");
     Tooltip(f, "Intensity of the horizontal displacement.");
     SetRange(f, 1, 10);
-    // Float_knob(f, &noise_mult, "multiply");
-    // Tooltip(f, "Intensity Multiplier.");
-    // SetRange(f, 1, 10);
     Float_knob(f, &noise_freq, "frequency");
     Tooltip(f, "Frequency at which glitch lines occur.");
     SetRange(f, 0, 1);
