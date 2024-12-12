@@ -37,9 +37,8 @@ This node applies a horizontal glitch effect to the image lines.
 ---
 
 ## Compatibility
-🖥️ This plugin is compatible with the following versions of Nuke:
 
-- **Nuke 12.1 and above**
+![`COMPATIBILITY.md`](./COMPATIBILITY.md).
 
 ---
 
