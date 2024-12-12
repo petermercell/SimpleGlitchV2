@@ -38,7 +38,7 @@ This node applies a horizontal glitch effect to the image lines.
 
 ## Compatibility
 
-[`COMPATIBILITY.md`](./COMPATIBILITY.md).
+Check the supported Nuke versions [`here`](./COMPATIBILITY.md)
 
 ---
 
