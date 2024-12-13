@@ -51,7 +51,7 @@ Check the supported Nuke versions [`here`](./COMPATIBILITY.md)
 
    **Example of `.nuke` Directory Location:**
    - On Windows: `C:\Users\YourUser\.nuke`
-   - On macOS/Linux: `/home/youruser/.nuke`
+   - On Linux: `/home/youruser/.nuke`
 
 4. ✅ Open Nuke and verify that the plugin is available in the toolbar or node menu.
 
