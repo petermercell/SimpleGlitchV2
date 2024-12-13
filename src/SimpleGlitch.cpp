@@ -23,24 +23,17 @@ inline float fract(float x)
 // Random Noise
 inline float randomNoise(int y, float noise_seed)
 {
-    return fract(std::sin((float)y * 12.9898f + noise_seed) * 43758.5453f);
+    return fract(std::sin(static_cast<float>(y) * 12.9898f + noise_seed) * 43758.5453f);
 }
 
 // block index
-inline auto blockIndex(int current, int final_pos, int size)
+inline int blockIndex(int current, int final_pos, int size)
 {
     return (current - final_pos) / size;
 }
 
-SimpleGlitchIop::SimpleGlitchIop(Node *node) : Iop(node)
+SimpleGlitchIop::SimpleGlitchIop(Node *node) : Iop(node), noise_seed(235.0f), noise_height(4.0f), noise_intensity(2.0f), _bbox(1), noise_freq(1.0f), noise_offset(0.5f), solo_effect(false)
 {
-    noise_seed = 235.0f;
-    noise_height = 4.0f;
-    noise_intensity = 2.0f;
-    _bbox = 1;
-    noise_freq = 1.0f;
-    noise_offset = 0.5f;
-    solo_effect = false;
 }
 
 void SimpleGlitchIop::knobs(Knob_Callback f)
@@ -48,17 +41,22 @@ void SimpleGlitchIop::knobs(Knob_Callback f)
     Float_knob(f, &noise_seed, "seed");
     Tooltip(f, "Random seed for the glitch pattern.");
     SetRange(f, 1, 1000);
+
     Bool_knob(f, &solo_effect, "effect only");
     Tooltip(f, "Outputs only the glitch effect.");
+
     Float_knob(f, &noise_height, "noise_height", "noise height");
     Tooltip(f, "Height in lines for each glitch block.");
     SetRange(f, 1, 20);
+
     Float_knob(f, &noise_intensity, "intensity");
     Tooltip(f, "Intensity of the horizontal displacement.");
     SetRange(f, 1, 10);
+
     Float_knob(f, &noise_freq, "frequency");
     Tooltip(f, "Frequency at which glitch lines occur.");
     SetRange(f, 0, 1);
+
     Float_knob(f, &noise_offset, "offset");
     Tooltip(f, "General image Offset.");
     SetRange(f, 0, 1);
@@ -66,7 +64,7 @@ void SimpleGlitchIop::knobs(Knob_Callback f)
 
 void SimpleGlitchIop::_validate(bool for_real)
 {
-    _bbox = (int)noise_intensity;
+    _bbox = static_cast<int>(noise_intensity);
 
     copy_info();
     info_.pad(_bbox);
@@ -75,7 +73,7 @@ void SimpleGlitchIop::_validate(bool for_real)
 
 void SimpleGlitchIop::_request(int x, int y, int r, int t, ChannelMask channels, int count)
 {
-    _bbox = (int)noise_intensity;
+    _bbox = static_cast<int>(noise_intensity);
     x -= _bbox;
     r += _bbox;
     y -= _bbox;
@@ -91,16 +89,17 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row &out
     const int im_y = imageFormat.y();
     const int im_x = imageFormat.x();
 
-    // make a tile for the current row
-    _bbox = (int)noise_intensity;
+    // Make a tile for the current row
+    _bbox = static_cast<int>(noise_intensity);
     Tile tile(input0(), x - _bbox, y - _bbox, r + _bbox, y + _bbox, channels);
 
     if (aborted())
     {
         return;
     }
+
     // Set the size of the glitch block in y
-    int block_index = blockIndex(y, im_y, noise_height);
+    int block_index = blockIndex(y, im_y, static_cast<int>(noise_height));
     // Set the Noise
     float lineNoise = randomNoise(block_index, noise_seed);
 
@@ -117,18 +116,18 @@ void SimpleGlitchIop::engine(int y, int x, int r, ChannelMask channels, Row &out
         // Noise Frequency (threshold)
         if (lineNoise < noise_freq)
         {
-            int offset = (int)((lineNoise - noise_offset) * noise_intensity * NOISE_MULT); // block offset
+            int offset = static_cast<int>((lineNoise - noise_offset) * noise_intensity * NOISE_MULT); // block offset
 
             for (int X = x; X < r; X++)
             {
                 int newX = tile.clampx(X + offset); // avoid weird pixel values
-                float row_off = newX == X ? 0.0f : inptr[newX];
+                float row_off = (newX == X) ? 0.0f : inptr[newX];
                 outptr[X] = solo_effect ? row_off : inptr[newX];
             }
         }
         else
         {
-            std::copy(in[z] + x, in[z] + r, out.writable(z) + x); // just copy the same pixel values to the current row (No pixel changes)
+            std::copy(in[z] + x, in[z] + r, out.writable(z) + x); // Just copy the same pixel values to the current row (No pixel changes)
         }
     }
 }
