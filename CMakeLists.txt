@@ -1,3 +1,6 @@
+# Allows global toolchain to be set using GLOBAL_TOOLCHAIN env
+# Note: needs to happen before project is set
+# Adapted to support Nuke 12
 if(DEFINED ENV{GLOBAL_TOOLCHAIN})
     message("Set toolchain $ENV{GLOBAL_TOOLCHAIN}")
     set(CMAKE_TOOLCHAIN_FILE $ENV{GLOBAL_TOOLCHAIN})
