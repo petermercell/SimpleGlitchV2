@@ -3,8 +3,15 @@ project(SimpleGlitch2)
 
 cmake_policy(SET CMP0074 NEW)
 
+# choose "Delete Cache and Reconfigure"
+#set(Nuke_ROOT "C:/Program Files/Nuke13.1v5") # manual
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(Nuke REQUIRED)
+
+message("##################################")
+message("Using Nuke ${NUKE_VERSION_MAJOR}.${NUKE_VERSION_MINOR}v${NUKE_VERSION_RELEASE}")
+message("##################################")
 
 if (UNIX)
     add_compile_options(
