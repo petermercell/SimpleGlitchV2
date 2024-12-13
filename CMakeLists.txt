@@ -1,53 +1,29 @@
-# Allows global toolchain to be set using GLOBAL_TOOLCHAIN env
-# Note: needs to happen before project is set
-# Adapted to support Nuke 12
-if(DEFINED ENV{GLOBAL_TOOLCHAIN})
-    message("Set toolchain $ENV{GLOBAL_TOOLCHAIN}")
-    set(CMAKE_TOOLCHAIN_FILE $ENV{GLOBAL_TOOLCHAIN})
-endif()
-
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(SimpleGlitch2)
 
+cmake_policy(SET CMP0074 NEW)
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(Nuke REQUIRED)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(SRC_FILE src/SimpleGlitch.cpp)
 
-if (DEFINED NUKE_ROOT)
-    string(REGEX MATCH "Nuke([0-9]+)\\.([0-9]+)" NUKE_VERSION_MATCH ${NUKE_ROOT})
-
-    if (NUKE_VERSION_MATCH)
-        set(NUKE_MAJOR_VERSION "${CMAKE_MATCH_1}")
-        set(NUKE_MINOR_VERSION "${CMAKE_MATCH_2}")
-        message("Detected Nuke version: ${NUKE_MAJOR_VERSION}.${NUKE_MINOR_VERSION}")
-
-        if (NUKE_MAJOR_VERSION STREQUAL "12")
-            message("Configuring plugin for Nuke 12 ...")
-            set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-            function(add_nuke_plugin PLUGIN_NAME)
-                add_library(${PLUGIN_NAME} MODULE ${ARGN})
-                add_library(NukePlugins::${PLUGIN_NAME} ALIAS ${PLUGIN_NAME})
-                target_link_libraries(${PLUGIN_NAME} PRIVATE Nuke::NDK)
-                target_compile_definitions(${PLUGIN_NAME} PRIVATE FN_EXAMPLE_PLUGIN)
-                set_target_properties(${PLUGIN_NAME} PROPERTIES PREFIX "")
-                if (APPLE)
-                    set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX ".dylib")
-                endif()
-            endfunction()
-            function(add_plugin PLUGIN_NAME)
-                add_nuke_plugin(${PLUGIN_NAME} ${ARGN})
-                target_compile_definitions(${PLUGIN_NAME} PRIVATE FN_PLUGIN)
-            endfunction()
-            add_plugin(${CMAKE_PROJECT_NAME} ${SRC_FILE})
-        elseif (NUKE_MAJOR_VERSION GREATER_EQUAL "13")
-            message("Configuring plugin for Nuke 13 or later ...")
-            function(add_plugin PLUGIN_NAME)
-                add_nuke_plugin(${PLUGIN_NAME} ${ARGN})
-                target_compile_definitions(${PLUGIN_NAME} PRIVATE FN_PLUGIN)
-            endfunction()
-            add_plugin(${CMAKE_PROJECT_NAME} ${SRC_FILE})
-        else()
-            message(FATAL_ERROR "Unsupported Nuke version: ${NUKE_MAJOR_VERSION}.${NUKE_MINOR_VERSION}")
-        endif()
-    endif()
+if (UNIX)
+    add_compile_options(
+        -DUSE_GLEW -fPIC -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mavx
+    )
 endif()
+
+find_package(OpenGL)
+if (NOT OpenGL_FOUND)
+    message(WARNING "Couldn't find OpenGL")   
+endif()
+
+if (NUKE_VERSION_MAJOR VERSION_GREATER_EQUAL 15.0)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=1")
+    set(CMAKE_CXX_STANDARD 17)
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+    set(CMAKE_CXX_STANDARD 14)
+endif()
+
+# add sub directory
+add_subdirectory(src)

@@ -27,7 +27,6 @@ build/
 Testing/
 CTestTestfile.cmake
 CTestCustom.cmake
-*.cmake
 *.ninja
 Ninja.build
 compile_commands.json
