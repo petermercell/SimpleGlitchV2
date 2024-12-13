@@ -32,9 +32,17 @@ inline int blockIndex(int current, int final_pos, int size)
     return (current - final_pos) / size;
 }
 
-SimpleGlitchIop::SimpleGlitchIop(Node *node) : Iop(node), noise_seed(235.0f), noise_height(4.0f), noise_intensity(2.0f), _bbox(1), noise_freq(1.0f), noise_offset(0.5f), solo_effect(false)
+SimpleGlitchIop::SimpleGlitchIop(Node *node) : Iop(node)
 {
+    noise_seed = 235.0f;
+    noise_height = 4.0f;
+    noise_intensity = 2.0f;
+    _bbox = 1;
+    noise_freq = 1.0f;
+    noise_offset = 0.5f;
+    solo_effect = false;
 }
+
 
 void SimpleGlitchIop::knobs(Knob_Callback f)
 {
