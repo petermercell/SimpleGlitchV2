@@ -1,0 +1,28 @@
+{
+  "name": "linux",
+  // Usa tu imagen local ya construida:
+  "image": "nukedockerbuild:12.1-linux",
+
+  // Carpeta donde VS Code montará tu código dentro del contenedor:
+  "workspaceFolder": "/workspaces/SimpleGlitchV2",
+
+  // Usuario que existe en la imagen; si en tu Dockerfile usas root, cámbialo por "root"
+  "remoteUser": "root",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "streetsidesoftware.code-spell-checker",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cpptools-themes"
+      ]
+    }
+  },
+
+  "forwardPorts": [
+    3000
+  ]
+}
