@@ -23,7 +23,7 @@ jobs:
 
     strategy:
       matrix:
-        nuke_version: ["13.0"]
+        nuke_version: ["12.1"]
       fail-fast: false
 
     steps:
