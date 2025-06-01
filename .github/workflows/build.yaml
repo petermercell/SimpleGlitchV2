@@ -1,0 +1,139 @@
+name: Build and Release
+
+on:
+  # Trigger manual desde GitHub UI
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., v1.0.0)"
+        required: true
+        default: "v1.0.0"
+
+  # Trigger automático cuando se hace push de un tag
+  push:
+    tags:
+      - "v*"
+
+  # Trigger en pull requests para testing
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            extension: .so
+            cmake_args: -DCMAKE_BUILD_TYPE=Release
+          - os: windows-latest
+            extension: .dll
+            cmake_args: -DCMAKE_BUILD_TYPE=Release
+          - os: macos-latest
+            extension: .dylib
+            cmake_args: -DCMAKE_BUILD_TYPE=Release
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v1.14
+        with:
+          cmake-version: "3.20"
+
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: plugin-${{ matrix.os }}
+          path: |
+            build/lib/*${{ matrix.extension }}
+            build/Release/*${{ matrix.extension }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "version_clean=$(echo ${{ github.event.inputs.version }} | sed 's/^v//')" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "version_clean=$(echo ${GITHUB_REF#refs/tags/} | sed 's/^v//')" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release assets
+        run: |
+          mkdir release-assets
+          VERSION="${{ steps.get_version.outputs.version_clean }}"
+
+          # Copiar archivos de Linux
+          cp plugin-ubuntu-latest/*.so release-assets/ 2>/dev/null || true
+          # Copiar archivos de Windows  
+          cp plugin-windows-latest/*.dll release-assets/ 2>/dev/null || true
+          # Copiar archivos de macOS
+          cp plugin-macos-latest/*.dylib release-assets/ 2>/dev/null || true
+
+          # Crear zips por plataforma con versión en el nombre
+          if [ -n "$(ls release-assets/*.so 2>/dev/null)" ]; then
+            zip -j SimpleGlitch2-${VERSION}-linux.zip release-assets/*.so
+          fi
+          if [ -n "$(ls release-assets/*.dll 2>/dev/null)" ]; then
+            zip -j SimpleGlitch2-${VERSION}-windows.zip release-assets/*.dll
+          fi
+          if [ -n "$(ls release-assets/*.dylib 2>/dev/null)" ]; then
+            zip -j SimpleGlitch2-${VERSION}-macos.zip release-assets/*.dylib
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body: |
+            ## SimpleGlitch2 Plugin Release ${{ steps.get_version.outputs.version }}
+
+            ### Changes
+            - [Add your changes here]
+
+            ### Downloads
+            - **Linux**: SimpleGlitch2-${{ steps.get_version.outputs.version_clean }}-linux.zip
+            - **Windows**: SimpleGlitch2-${{ steps.get_version.outputs.version_clean }}-windows.zip  
+            - **macOS**: SimpleGlitch2-${{ steps.get_version.outputs.version_clean }}-macos.zip
+
+            ### Installation
+            1. Download the appropriate file for your platform
+            2. Extract to your Nuke plugins directory
+            3. Restart Nuke
+          files: |
+            SimpleGlitch2-*-*.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
