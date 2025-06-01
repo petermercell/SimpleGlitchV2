@@ -40,65 +40,12 @@ jobs:
           name: linux-${{ matrix.nuke_version }}
           path: ${{ github.workspace }}/build/lib
 
-  build-macos:
-    runs-on: macos-latest
-
-    strategy:
-      matrix:
-        nuke_version: ["13.0", "13.1", "13.2", "14.0", "14.1", "15.0"]
-      fail-fast: false
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker
-        run: |
-          brew install docker
-          colima start --cpu 2 --memory 10 --disk 10
-
-      - name: Pull image
-        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-macos-latest
-
-      - name: Run build
-        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-macos-latest bash -c "cmake . -B build && cmake --build build"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-${{ matrix.nuke_version }}
-          path: ${{ github.workspace }}/build/lib
-
-  build-macos-arm:
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        nuke_version: ["15.0"]
-      fail-fast: false
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Docker
-        run: |
-          brew install docker
-          colima start --cpu 2 --memory 10 --disk 10
-
-      - name: Pull image
-        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-macos-arm-latest
-
-      - name: Run build
-        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-macos-arm-latest bash -c "cmake . -B build && cmake --build build"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-arm-${{ matrix.nuke_version }}
-          path: ${{ github.workspace }}/build/lib
-
   build-windows:
     runs-on: windows-latest
 
     strategy:
       matrix:
-        nuke_version: ["13.0", "13.1", "13.2", "14.0", "14.1", "15.0"]
+        nuke_version: ["12.1"]
       fail-fast: false
 
     steps:
@@ -117,7 +64,7 @@ jobs:
 
   create-release:
     runs-on: ubuntu-latest
-    needs: [build-linux, build-windows, build-macos, build-macos-arm]
+    needs: [build-linux, build-windows]
     permissions: write-all
     if: ${{ always() && !cancelled() && needs.build-linux.result == 'success'}}
 
@@ -155,8 +102,6 @@ jobs:
                 
                 # Normalizar nombres de OS
                 case "$os" in
-                  "macos") os_name="macOS" ;;
-                  "macos_arm") os_name="macOS-ARM" ;;
                   "linux") os_name="Linux" ;;
                   "windows") os_name="Windows" ;;
                   *) os_name="$os" ;;
@@ -197,7 +142,7 @@ jobs:
           EOF
 
           # Agregar enlaces de descarga organizados por versión
-          for nuke_ver in "13.0" "13.1" "13.2" "14.0" "14.1" "15.0"; do
+          for nuke_ver in "12.1" "13.0" "13.1" "13.2" "14.0" "14.1" "15.0"; do
             echo "#### Nuke ${nuke_ver}" >> release_notes.md
             
             # Verificar si existen archivos para esta versión
@@ -207,10 +152,6 @@ jobs:
                   filename=$(basename "$file")
                   if [[ "$filename" =~ Linux ]]; then
                     echo "- **Linux**: \`${filename}\`" >> release_notes.md
-                  elif [[ "$filename" =~ macOS-ARM ]]; then
-                    echo "- **macOS (Apple Silicon)**: \`${filename}\`" >> release_notes.md
-                  elif [[ "$filename" =~ macOS ]]; then
-                    echo "- **macOS (Intel)**: \`${filename}\`" >> release_notes.md
                   elif [[ "$filename" =~ Windows ]]; then
                     echo "- **Windows**: \`${filename}\`" >> release_notes.md
                   fi
@@ -229,8 +170,7 @@ jobs:
           3. Restart Nuke
 
           ### Compatibility
-          - **Nuke 13.0+**: All platforms supported
-          - **Nuke 15.0**: Includes Apple Silicon support for macOS
+          - **Nuke 12.1+**: Windows and Linux platforms supported
           EOF
 
       - name: Create Release
