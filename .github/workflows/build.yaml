@@ -15,7 +15,13 @@ on:
       - "v*"
 
 env:
-  image: tu-usuario/tu-imagen-nuke # Cambia esto por tu imagen
+  image: ghcr.io/gillesvink/nukedockerbuild
+
+# =============================================================================
+# NUKE VERSIONS MATRIX - Cambiar aquí para agregar/quitar versiones
+# Actualmente compilando: 12.1
+# Para agregar más versiones: ["12.1", "13.0", "14.0"]
+# =============================================================================
 
 jobs:
   build-linux:
@@ -23,17 +29,21 @@ jobs:
 
     strategy:
       matrix:
+        # CAMBIAR AQUÍ para agregar más versiones: ["12.1", "13.0", "14.0"]
         nuke_version: ["12.1"]
       fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Login to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Pull image
-        run: docker pull ${{ env.image }}:12.1-linux # O el tag que uses
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-linux-slim-latest
 
       - name: Run build
-        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:12.1-linux bash -c "cmake3 . -B build && cmake3 --build build"
+        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux-slim-latest bash -c "cmake3 . -B build && cmake3 --build build"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -45,17 +55,21 @@ jobs:
 
     strategy:
       matrix:
-        nuke_version: ["13.0"]
+        # CAMBIAR AQUÍ para agregar más versiones: ["12.1", "13.0", "14.0"]
+        nuke_version: ["12.1"]
       fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
 
+      - name: Login to GitHub Container Registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
       - name: Pull image
-        run: docker pull ${{ env.image }}:12.1-windows # O el tag que uses
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-windows-latest
 
       - name: Run build
-        run: docker run --rm -v "${{ github.workspace }}:C:\nuke_build_directory" ${{ env.image }}:12.1-windows powershell -Command "cmake . -DCMAKE_GENERATOR_PLATFORM=x64 -B build ; cmake --build build --config Release"
+        run: docker run --rm -v "${{ github.workspace }}:C:\nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows-latest powershell -Command "cmake . -DCMAKE_GENERATOR_PLATFORM=x64 -B build ; cmake --build build --config Release"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -142,7 +156,9 @@ jobs:
           EOF
 
           # Agregar enlaces de descarga organizados por versión
-          for nuke_ver in "13.0" "13.1" "13.2" "14.0" "14.1" "15.0"; do
+          # Solo mostrar las versiones que realmente se están compilando
+          # CAMBIAR AQUÍ si agregas más versiones: "12.1" "13.0" "14.0"
+          for nuke_ver in "12.1"; do
             echo "#### Nuke ${nuke_ver}" >> release_notes.md
             
             # Verificar si existen archivos para esta versión
@@ -170,7 +186,8 @@ jobs:
           3. Restart Nuke
 
           ### Compatibility
-          - **Nuke 13.0+**: Windows and Linux platforms supported
+          - **Nuke 12.1**: Windows and Linux platforms supported
+          - Should work with newer Nuke versions (13.0+) but compiled specifically for 12.1
           EOF
 
       - name: Create Release
