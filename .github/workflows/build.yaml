@@ -15,7 +15,7 @@ on:
       - "v*"
 
 env:
-  image: ghcr.io/gillesvink/nukedockerbuild
+  image: ghcr.io/gonzalo476/nukedockerbuild
 
 # =============================================================================
 # NUKE VERSIONS MATRIX - Cambiar aquí para agregar/quitar versiones
