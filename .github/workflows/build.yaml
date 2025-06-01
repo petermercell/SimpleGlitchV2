@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build and Release Multi-Version
 
 on:
   # Trigger manual desde GitHub UI
@@ -14,68 +14,117 @@ on:
     tags:
       - "v*"
 
-  # Trigger en pull requests para testing
-  pull_request:
-    branches: [main, master]
+env:
+  image: ghcr.io/gillesvink/nukedockerbuild
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  build-linux:
+    runs-on: ubuntu-latest
+
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        include:
-          - os: ubuntu-latest
-            extension: .so
-            cmake_args: -DCMAKE_BUILD_TYPE=Release
-          - os: windows-latest
-            extension: .dll
-            cmake_args: -DCMAKE_BUILD_TYPE=Release
-          - os: macos-latest
-            extension: .dylib
-            cmake_args: -DCMAKE_BUILD_TYPE=Release
+        nuke_version: ["12.1"]
+      fail-fast: false
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup CMake
-        uses: jwlawson/actions-setup-cmake@v1.14
+      - name: Pull image
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-linux-slim-latest
+
+      - name: Run build
+        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux-slim-latest bash -c "cmake3 . -B build && cmake3 --build build"
+
+      - uses: actions/upload-artifact@v4
         with:
-          cmake-version: "3.20"
+          name: linux-${{ matrix.nuke_version }}
+          path: ${{ github.workspace }}/build/lib
 
-      - name: Configure CMake
+  build-macos:
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        nuke_version: ["13.0", "13.1", "13.2", "14.0", "14.1", "15.0"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker
         run: |
-          mkdir build
-          cd build
-          cmake .. ${{ matrix.cmake_args }}
+          brew install docker
+          colima start --cpu 2 --memory 10 --disk 10
 
-      - name: Build
-        run: |
-          cd build
-          cmake --build . --config Release
+      - name: Pull image
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-macos-latest
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+      - name: Run build
+        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-macos-latest bash -c "cmake . -B build && cmake --build build"
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: plugin-${{ matrix.os }}
-          path: |
-            build/lib/*${{ matrix.extension }}
-            build/Release/*${{ matrix.extension }}
+          name: macos-${{ matrix.nuke_version }}
+          path: ${{ github.workspace }}/build/lib
 
-  release:
-    name: Create Release
-    needs: build
+  build-macos-arm:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        nuke_version: ["15.0"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker
+        run: |
+          brew install docker
+          colima start --cpu 2 --memory 10 --disk 10
+
+      - name: Pull image
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-macos-arm-latest
+
+      - name: Run build
+        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-macos-arm-latest bash -c "cmake . -B build && cmake --build build"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm-${{ matrix.nuke_version }}
+          path: ${{ github.workspace }}/build/lib
+
+  build-windows:
+    runs-on: windows-latest
+
+    strategy:
+      matrix:
+        nuke_version: ["13.0", "13.1", "13.2", "14.0", "14.1", "15.0"]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull image
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-windows-latest
+
+      - name: Run build
+        run: docker run --rm -v "${{ github.workspace }}:C:\nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows-latest powershell -Command "cmake . -DCMAKE_GENERATOR_PLATFORM=x64 -B build ; cmake --build build --config Release"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.nuke_version }}
+          path: ${{ github.workspace }}/build/lib/Release
+
+  create-release:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    needs: [build-linux, build-windows, build-macos, build-macos-arm]
+    permissions: write-all
+    if: ${{ always() && !cancelled() && needs.build-linux.result == 'success'}}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
+        with:
+          path: ${{ github.workspace }}
 
       - name: Get version
         id: get_version
@@ -88,51 +137,109 @@ jobs:
             echo "version_clean=$(echo ${GITHUB_REF#refs/tags/} | sed 's/^v//')" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create release assets
+      - name: Create individual zips for each OS and Nuke version
         run: |
-          mkdir release-assets
+          mkdir -p release-assets
           VERSION="${{ steps.get_version.outputs.version_clean }}"
+          PROJECT_NAME="${{ github.event.repository.name }}"
 
-          # Copiar archivos de Linux
-          cp plugin-ubuntu-latest/*.so release-assets/ 2>/dev/null || true
-          # Copiar archivos de Windows  
-          cp plugin-windows-latest/*.dll release-assets/ 2>/dev/null || true
-          # Copiar archivos de macOS
-          cp plugin-macos-latest/*.dylib release-assets/ 2>/dev/null || true
+          # Procesar cada artefacto y crear zips individuales
+          for artifact in ${{ github.workspace }}/*; do
+            if [ -d "$artifact" ]; then
+              basename=$(basename -- $artifact)
+              
+              # Extraer OS y versión de Nuke del nombre del artefacto
+              if [[ "$basename" =~ ^([^-]+)-(.+)$ ]]; then
+                os="${BASH_REMATCH[1]}"
+                nuke_version="${BASH_REMATCH[2]}"
+                
+                # Normalizar nombres de OS
+                case "$os" in
+                  "macos") os_name="macOS" ;;
+                  "macos_arm") os_name="macOS-ARM" ;;
+                  "linux") os_name="Linux" ;;
+                  "windows") os_name="Windows" ;;
+                  *) os_name="$os" ;;
+                esac
+                
+                # Crear zip individual para esta combinación OS-NukeVersion
+                zip_name="${PROJECT_NAME}-${VERSION}-Nuke${nuke_version}-${os_name}.zip"
+                
+                # Comprimir archivos de plugin directamente
+                cd "$artifact"
+                if ls *.dll *.so *.dylib 1> /dev/null 2>&1; then
+                  zip -j "${{ github.workspace }}/release-assets/${zip_name}" *.dll *.so *.dylib 2>/dev/null || true
+                  echo "Created: ${zip_name}"
+                fi
+                cd "${{ github.workspace }}"
+              fi
+            fi
+          done
 
-          # Crear zips por plataforma con versión en el nombre
-          if [ -n "$(ls release-assets/*.so 2>/dev/null)" ]; then
-            zip -j SimpleGlitch2-${VERSION}-linux.zip release-assets/*.so
-          fi
-          if [ -n "$(ls release-assets/*.dll 2>/dev/null)" ]; then
-            zip -j SimpleGlitch2-${VERSION}-windows.zip release-assets/*.dll
-          fi
-          if [ -n "$(ls release-assets/*.dylib 2>/dev/null)" ]; then
-            zip -j SimpleGlitch2-${VERSION}-macos.zip release-assets/*.dylib
-          fi
+          # Listar archivos creados
+          echo "Created release files:"
+          ls -la release-assets/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          VERSION="${{ steps.get_version.outputs.version_clean }}"
+          PROJECT_NAME="${{ github.event.repository.name }}"
+
+          cat > release_notes.md << EOF
+          ## ${PROJECT_NAME} Plugin Release v${VERSION}
+
+          ### Changes
+          - [Add your changes here]
+
+          ### Downloads by Nuke Version
+
+          EOF
+
+          # Agregar enlaces de descarga organizados por versión
+          for nuke_ver in "13.0" "13.1" "13.2" "14.0" "14.1" "15.0"; do
+            echo "#### Nuke ${nuke_ver}" >> release_notes.md
+            
+            # Verificar si existen archivos para esta versión
+            if ls release-assets/*Nuke${nuke_ver}* 1> /dev/null 2>&1; then
+              for file in release-assets/*Nuke${nuke_ver}*; do
+                if [ -f "$file" ]; then
+                  filename=$(basename "$file")
+                  if [[ "$filename" =~ Linux ]]; then
+                    echo "- **Linux**: \`${filename}\`" >> release_notes.md
+                  elif [[ "$filename" =~ macOS-ARM ]]; then
+                    echo "- **macOS (Apple Silicon)**: \`${filename}\`" >> release_notes.md
+                  elif [[ "$filename" =~ macOS ]]; then
+                    echo "- **macOS (Intel)**: \`${filename}\`" >> release_notes.md
+                  elif [[ "$filename" =~ Windows ]]; then
+                    echo "- **Windows**: \`${filename}\`" >> release_notes.md
+                  fi
+                fi
+              done
+            else
+              echo "- *No builds available for this version*" >> release_notes.md
+            fi
+            echo "" >> release_notes.md
+          done
+
+          cat >> release_notes.md << EOF
+          ### Installation
+          1. Download the appropriate file for your platform and Nuke version
+          2. Extract to your Nuke plugins directory
+          3. Restart Nuke
+
+          ### Compatibility
+          - **Nuke 13.0+**: All platforms supported
+          - **Nuke 15.0**: Includes Apple Silicon support for macOS
+          EOF
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.get_version.outputs.version }}
           name: Release ${{ steps.get_version.outputs.version }}
-          body: |
-            ## SimpleGlitch2 Plugin Release ${{ steps.get_version.outputs.version }}
-
-            ### Changes
-            - [Add your changes here]
-
-            ### Downloads
-            - **Linux**: SimpleGlitch2-${{ steps.get_version.outputs.version_clean }}-linux.zip
-            - **Windows**: SimpleGlitch2-${{ steps.get_version.outputs.version_clean }}-windows.zip  
-            - **macOS**: SimpleGlitch2-${{ steps.get_version.outputs.version_clean }}-macos.zip
-
-            ### Installation
-            1. Download the appropriate file for your platform
-            2. Extract to your Nuke plugins directory
-            3. Restart Nuke
-          files: |
-            SimpleGlitch2-*-*.zip
+          body_path: release_notes.md
+          files: release-assets/*.zip
           draft: false
           prerelease: false
         env:
