@@ -66,6 +66,22 @@ function(add_plugin PLUGIN_NAME)
         CXX_STANDARD_REQUIRED ON
     )
     
+    # Configurar directorio de salida según la plataforma
+    if(WIN32)
+        # Windows: poner en /build/lib/Release/
+        set_target_properties(${PLUGIN_NAME} PROPERTIES
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/Release"
+            RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/lib/Release"
+            RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/lib/Release"
+        )
+    else()
+        # Linux/macOS: poner directamente en /build/lib/
+        set_target_properties(${PLUGIN_NAME} PROPERTIES
+            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+        )
+    endif()
+    
     # Platform-specific settings
     if(UNIX AND NOT APPLE)
         target_link_libraries(${PLUGIN_NAME} PRIVATE dl pthread)
@@ -76,7 +92,31 @@ function(add_plugin PLUGIN_NAME)
         )
     endif()
     
+    # Custom command para asegurar que el archivo se copie (backup method)
+    if(WIN32)
+        # Windows: copiar a /build/lib/Release/
+        add_custom_command(TARGET ${PLUGIN_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/lib/Release"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+                "$<TARGET_FILE:${PLUGIN_NAME}>" 
+                "${CMAKE_BINARY_DIR}/lib/Release/"
+            COMMENT "Copying ${PLUGIN_NAME} to ${CMAKE_BINARY_DIR}/lib/Release/"
+        )
+        set(OUTPUT_MESSAGE "${CMAKE_BINARY_DIR}/lib/Release/")
+    else()
+        # Linux/macOS: copiar a /build/lib/
+        add_custom_command(TARGET ${PLUGIN_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/lib"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+                "$<TARGET_FILE:${PLUGIN_NAME}>" 
+                "${CMAKE_BINARY_DIR}/lib/"
+            COMMENT "Copying ${PLUGIN_NAME} to ${CMAKE_BINARY_DIR}/lib/"
+        )
+        set(OUTPUT_MESSAGE "${CMAKE_BINARY_DIR}/lib/")
+    endif()
+    
     message(STATUS "Plugin ${PLUGIN_NAME} configured successfully")
+    message(STATUS "  Output directory: ${OUTPUT_MESSAGE}")
 endfunction()
 
 # Function to set common Nuke plugin properties
