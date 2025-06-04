@@ -62,7 +62,7 @@ jobs:
           path: ${{ github.workspace }}/build/lib
 
   build-windows:
-    runs-on: ubuntu-latest    # still using ubuntu to run Windows container
+    runs-on: ubuntu-latest # still using ubuntu to run Windows container
     permissions:
       contents: read
       packages: read
@@ -194,44 +194,48 @@ jobs:
           echo "Files in release-assets:"
           ls -1 release-assets
 
-      - name: Generate release notes
+      - name: Generate release notes (in English)
         id: release_notes
         run: |
           PROJECT_NAME="${{ github.event.repository.name }}"
           VERSION="${{ steps.get_version.outputs.version_clean }}"
+
           cat > release_notes.md << 'EOF'
-        ## ${PROJECT_NAME} Plugin Release v${VERSION}
+          ## ${PROJECT_NAME} Plugin Release v${VERSION}
 
-        ### Downloads by Nuke Version
-        EOF
+          ### Changes
+          - Fix YAML syntax error on line 206 of `.github/workflows/build.yaml` (Invalid workflow file).
 
-                  # List the ZIP files created for each Nuke version
-                  for zipfile in release-assets/*.zip; do
-                    name="$(basename "$zipfile")"
-                    # name example: SimpleGlitch2-Nuke12.1-Linux.zip
-                    # Split: [SimpleGlitch2] - [Nuke12.1] - [Linux.zip]
-                    IFS='-' read -r plugin_label nuke_label os_label_ext <<< "$name"
-                    # os_label_ext includes ".zip", so strip it
-                    os_label="${os_label_ext%.zip}"
-                    nuke_version="${nuke_label#Nuke}"  # e.g. 12.1
+          ### Downloads by Nuke Version
+          EOF
 
-                    if [ "$os_label" == "Linux" ]; then
-                      echo "- **Linux (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
-                    elif [ "$os_label" == "Windows" ]; then
-                      echo "- **Windows (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
-                    fi
-                  done
+          # List the ZIP files created for each Nuke version
+          for zipfile in release-assets/*.zip; do
+            name="$(basename "$zipfile")"
+            # name example: SimpleGlitch2-Nuke12.1-Linux.zip
+            # Split: [SimpleGlitch2] - [Nuke12.1] - [Linux.zip]
+            IFS='-' read -r plugin_label nuke_label os_label_ext <<< "$name"
+            # os_label_ext incluye ".zip", así que lo quitamos
+            os_label="${os_label_ext%.zip}"
+            nuke_version="${nuke_label#Nuke}"  # e.g. 12.1
 
-                  cat >> release_notes.md << 'EOF'
+            if [ "$os_label" == "Linux" ]; then
+              echo "- **Linux (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
+            elif [ "$os_label" == "Windows" ]; then
+              echo "- **Windows (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
+            fi
+          done
 
-        ### Installation
+          cat >> release_notes.md << 'EOF'
 
-        1. Download the ZIP file or plugin (`.so` / `.dll`) matching your platform and Nuke version.  
-        2. Extract or copy the binary into your Nuke plugins folder.  
-        3. Restart Nuke.
+          ### Installation
 
-        ### Compatibility
+          1. Download the ZIP file or plugin (`.so` / `.dll`) matching your platform and Nuke version.  
+          2. Extract or copy the binary into your Nuke plugins folder.  
+          3. Restart Nuke.
 
-        - **Nuke 12.1**: Supported on Linux and Windows.  
-        - Built specifically for Nuke 12.1 (may work on newer versions).
-        EOF
+          ### Compatibility
+
+          - **Nuke 12.1**: Supported on Linux and Windows.  
+          - Built specifically for Nuke 12.1 (may work on newer versions).
+          EOF
