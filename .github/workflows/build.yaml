@@ -73,7 +73,12 @@ jobs:
 
       - name: Pull image
         run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-windows
-
+      - name: 🔍 Verificar contenido de /usr/local/nuke_install
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows bash -c "
+            echo 'Contenido de /usr/local/nuke_install:' &&
+            ls -R /usr/local/nuke_install || echo 'No existe /usr/local/nuke_install'
+          "
       - name: Run build
         run: |
           docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows bash -c "
