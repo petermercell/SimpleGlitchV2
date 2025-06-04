@@ -194,60 +194,44 @@ jobs:
           echo "Files in release-assets:"
           ls -1 release-assets
 
-      - name: Generate release notes (in English)
+      - name: Generate release notes
         id: release_notes
         run: |
           PROJECT_NAME="${{ github.event.repository.name }}"
           VERSION="${{ steps.get_version.outputs.version_clean }}"
-
           cat > release_notes.md << 'EOF'
-## ${PROJECT_NAME} Plugin Release v${VERSION}
+        ## ${PROJECT_NAME} Plugin Release v${VERSION}
 
-### Changes
-- [Add your changes here]
+        ### Downloads by Nuke Version
+        EOF
 
-### Downloads by Nuke Version
+                  # List the ZIP files created for each Nuke version
+                  for zipfile in release-assets/*.zip; do
+                    name="$(basename "$zipfile")"
+                    # name example: SimpleGlitch2-Nuke12.1-Linux.zip
+                    # Split: [SimpleGlitch2] - [Nuke12.1] - [Linux.zip]
+                    IFS='-' read -r plugin_label nuke_label os_label_ext <<< "$name"
+                    # os_label_ext includes ".zip", so strip it
+                    os_label="${os_label_ext%.zip}"
+                    nuke_version="${nuke_label#Nuke}"  # e.g. 12.1
 
-EOF
+                    if [ "$os_label" == "Linux" ]; then
+                      echo "- **Linux (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
+                    elif [ "$os_label" == "Windows" ]; then
+                      echo "- **Windows (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
+                    fi
+                  done
 
-          # List the ZIP files created for each Nuke version
-          for zipfile in release-assets/*.zip; do
-            name="$(basename "$zipfile")"
-            # name example: SimpleGlitch2-Nuke12.1-Linux.zip
-            # Split: [SimpleGlitch2] - [Nuke12.1] - [Linux.zip]
-            IFS='-' read -r plugin_label nuke_label os_label_ext <<< "$name"
-            # os_label_ext includes ".zip", so strip it
-            os_label="${os_label_ext%.zip}"
-            nuke_version="${nuke_label#Nuke}"  # e.g. 12.1
+                  cat >> release_notes.md << 'EOF'
 
-            if [ "$os_label" == "Linux" ]; then
-              echo "- **Linux (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
-            elif [ "$os_label" == "Windows" ]; then
-              echo "- **Windows (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
-            fi
-          done
+        ### Installation
 
-          cat >> release_notes.md << 'EOF'
+        1. Download the ZIP file or plugin (`.so` / `.dll`) matching your platform and Nuke version.  
+        2. Extract or copy the binary into your Nuke plugins folder.  
+        3. Restart Nuke.
 
-### Installation
+        ### Compatibility
 
-1. Download the ZIP file or plugin (`.so` / `.dll`) that matches your platform and Nuke version.  
-2. Extract or copy the binary into your Nuke plugins folder.  
-3. Restart Nuke.
-
-### Compatibility
-
-- **Nuke 12.1**: Supported on Linux and Windows.  
-- Built specifically for Nuke 12.1 (may work on newer versions).
-EOF
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.get_version.outputs.tag_name }}
-          name: Release ${{ steps.get_version.outputs.tag_name }}
-          body_path: release_notes.md
-          # Attach all files from release-assets/ (ZIPs and raw binaries)
-          files: release-assets/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        - **Nuke 12.1**: Supported on Linux and Windows.  
+        - Built specifically for Nuke 12.1 (may work on newer versions).
+        EOF
