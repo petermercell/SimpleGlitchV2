@@ -155,27 +155,25 @@ jobs:
           PROJECT_NAME="${{ github.event.repository.name }}"
           VERSION="${{ steps.get_version.outputs.version_clean }}"
 
-          # Iterate over each downloaded artifact folder:
-          for artifact_dir in ${{ github.workspace }}/*; do
+          # Asegúrate de que release-assets exista
+          mkdir -p "${{ github.workspace }}/release-assets"
+
+          # Recorre únicamente carpetas que inicien con "<plugin>-Nuke" (evita 'release-assets')
+          for artifact_dir in "${{ github.workspace }}/${PROJECT_NAME}-Nuke"*; do
             if [ -d "$artifact_dir" ]; then
               base="$(basename "$artifact_dir")"
-              # base format: SimpleGlitch2-Nuke12.1-Linux or ...-Windows
+              # base ejemplo: SimpleGlitch2-Nuke12.1-Linux
 
-              # Split by dashes: [plugin] - [Nuke12.1] - [Linux]
+              # Separa en [plugin] - [Nuke<ver>] - [Linux/Windows]
               IFS='-' read -r plugin_label nuke_label os_label <<< "$base"
-              # plugin_label = SimpleGlitch2
-              # nuke_label   = Nuke12.1
-              # os_label     = Linux (or Windows)
+              nuke_version="${nuke_label#Nuke}"  # quita prefijo "Nuke"
 
-              # Extract version number only (remove "Nuke" prefix)
-              nuke_version="${nuke_label#Nuke}"
-
-              # Build ZIP name, e.g. SimpleGlitch2-Nuke12.1-Linux.zip
+              # Nombre del ZIP: SimpleGlitch2-Nuke12.1-Linux.zip
               zip_name="${plugin_label}-Nuke${nuke_version}-${os_label}.zip"
 
               cd "$artifact_dir"
 
-              # 1) Copy raw binaries (.so / .dll) into release-assets/
+              # 1) Copia .so y/o .dll a release-assets/
               if ls *.so 1> /dev/null 2>&1; then
                 cp *.so "${{ github.workspace }}/release-assets/"
               fi
@@ -183,16 +181,17 @@ jobs:
                 cp *.dll "${{ github.workspace }}/release-assets/"
               fi
 
-              # 2) Create ZIP containing all binaries
+              # 2) Crea el ZIP con los binarios
               zip -j "${{ github.workspace }}/release-assets/${zip_name}" *.so *.dll *.dylib 2>/dev/null || true
               echo "→ Created ZIP: release-assets/${zip_name}"
 
+              # Regresa al workspace para la siguiente iteración
               cd "${{ github.workspace }}"
             fi
           done
 
           echo "Files in release-assets:"
-          ls -1 release-assets
+          ls -1 "${{ github.workspace }}/release-assets"
 
       - name: Generate release notes (in English)
         id: release_notes
