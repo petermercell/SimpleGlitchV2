@@ -234,13 +234,3 @@ EOF
 - **Nuke 12.1**: Supported on Linux and Windows.  
 - Built specifically for Nuke 12.1 (may work on newer versions).
 EOF
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.get_version.outputs.tag_name }}
-          name: Release ${{ steps.get_version.outputs.tag_name }}
-          body_path: release_notes.md
-          files: release-assets/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
