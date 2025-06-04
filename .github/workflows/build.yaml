@@ -83,7 +83,7 @@ jobs:
         run: |
           docker pull "${{ env.image }}:${{ matrix.nuke_version }}-windows"
 
-      - name: Debug: list /usr/local/nuke_install
+      - name: "Debug: list /usr/local/nuke_install"
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/nuke_build_directory" \
