@@ -66,10 +66,22 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Pull image
-        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-windows-latest
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-windows
 
       - name: Run build
-        run: docker run --rm -v "${{ github.workspace }}:C:\nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows-latest powershell -Command "cmake . -DCMAKE_GENERATOR_PLATFORM=x64 -B build ; cmake --build build --config Release"
+        run: |
+          docker run --rm -v "${{ github.workspace }}:C:\nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows bash -c "
+          rm -rf build &&
+          source /opt/msvc/msvcenv-native.sh &&
+          cmake . -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=/opt/msvc/bin/x64/cl \
+            -DCMAKE_CXX_COMPILER=/opt/msvc/bin/x64/cl \
+            -DCMAKE_LINKER=/opt/msvc/bin/x64/link \
+            -DCMAKE_SYSTEM_NAME=Windows \
+            -B build &&
+          cmake --build build
+          "
 
       - uses: actions/upload-artifact@v4
         with:

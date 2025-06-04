@@ -1,6 +1,6 @@
 {
-  "name": "linux",
-  "image": "nukedockerbuild:12.1-linux",
+  "name": "windows",
+  "image": "nukedockerbuild:12.1-windows",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "remoteUser": "root",
 
@@ -21,3 +21,4 @@
     3000
   ]
 }
+
