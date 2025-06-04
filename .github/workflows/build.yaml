@@ -124,7 +124,7 @@ jobs:
     needs: [build-linux, build-windows]
     permissions:
       contents: write
-    if: ${{ always() && !cancelled() && needs.build-linux.result == 'success' }}
+    if: ${{ always() && !cancelled() && needs.build-linux.result == 'success' && needs.build-windows.result == 'success' }}
 
     steps:
       - name: Download artifacts
@@ -235,3 +235,12 @@ EOF
 - Built specifically for Nuke 12.1 (may work on newer versions).
 EOF
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: Release ${{ steps.get_version.outputs.tag_name }}
+          body_path: release_notes.md
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
