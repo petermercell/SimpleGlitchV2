@@ -26,6 +26,9 @@ env:
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     strategy:
       matrix:
@@ -39,11 +42,23 @@ jobs:
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      - name: Debug - Check login
+        run: |
+          echo "Logged in user: ${{ github.actor }}"
+          echo "Trying to pull from: ${{ env.image }}:${{ matrix.nuke_version }}-windows"
+
+      - name: Debug - Try to list images (optional)
+        run: |
+          curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/user/packages?package_type=container
+        continue-on-error: true
+
       - name: Pull image
         run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-linux
 
       - name: Run build
-        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux-slim-latest bash -c "cmake3 . -B build && cmake3 --build build"
+        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux bash -c "cmake3 . -B build && cmake3 --build build"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -52,6 +67,9 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: read
 
     strategy:
       matrix:
@@ -64,6 +82,9 @@ jobs:
 
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Verify login
+        run: docker info
 
       - name: Pull image
         run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-windows
