@@ -155,20 +155,20 @@ jobs:
           PROJECT_NAME="${{ github.event.repository.name }}"
           VERSION="${{ steps.get_version.outputs.version_clean }}"
 
-          # Asegúrate de que release-assets exista
+          # Make sure release-assets exists
           mkdir -p "${{ github.workspace }}/release-assets"
 
-          # Recorre únicamente carpetas que inicien con "<plugin>-Nuke" (evita 'release-assets')
+          # Iterate only through folders starting with "<plugin>-Nuke" (avoids 'release-assets')
           for artifact_dir in "${{ github.workspace }}/${PROJECT_NAME}-Nuke"*; do
             if [ -d "$artifact_dir" ]; then
               base="$(basename "$artifact_dir")"
-              # base ejemplo: SimpleGlitch2-Nuke12.1-Linux
+              # base example: SimpleGlitch2-Nuke12.1-Linux
 
-              # Separa en [plugin] - [Nuke<ver>] - [Linux/Windows]
+              # Split into [plugin] - [Nuke<ver>] - [Linux/Windows]
               IFS='-' read -r plugin_label nuke_label os_label <<< "$base"
-              nuke_version="${nuke_label#Nuke}"  # quita prefijo "Nuke"
+              nuke_version="${nuke_label#Nuke}"  # remove "Nuke" prefix
 
-              # Nombre del ZIP: SimpleGlitch2-Nuke12.1-Linux.zip
+              # ZIP name: SimpleGlitch2-Nuke12.1-Linux.zip
               zip_name="${plugin_label}-Nuke${nuke_version}-${os_label}.zip"
 
               cd "$artifact_dir"
@@ -195,7 +195,7 @@ jobs:
           ### Downloads by Nuke Version
           EOF
 
-          # Agregar a release notes cada ZIP por plataforma
+          # Add to release notes each ZIP by platform
           for zipfile in release-assets/*.zip; do
             name="$(basename "$zipfile")"
             IFS='-' read -r _plugin_label nuke_label os_label_ext <<< "$name"
