@@ -219,7 +219,6 @@ jobs:
           ### Compatibility
 
           * **Nuke 12.1**: Supported on Linux and Windows.  
-          * Built specifically for Nuke 12.1 (may work on newer versions).
           EOF
 
       - name: Create GitHub Release
