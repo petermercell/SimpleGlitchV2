@@ -173,19 +173,10 @@ jobs:
 
               cd "$artifact_dir"
 
-              # 1) Copia .so y/o .dll a release-assets/
-              if ls *.so 1> /dev/null 2>&1; then
-                cp *.so "${{ github.workspace }}/release-assets/"
-              fi
-              if ls *.dll 1> /dev/null 2>&1; then
-                cp *.dll "${{ github.workspace }}/release-assets/"
-              fi
-
-              # 2) Crea el ZIP con los binarios
+              # make zip dir
               zip -j "${{ github.workspace }}/release-assets/${zip_name}" *.so *.dll *.dylib 2>/dev/null || true
               echo "→ Created ZIP: release-assets/${zip_name}"
 
-              # Regresa al workspace para la siguiente iteración
               cd "${{ github.workspace }}"
             fi
           done
@@ -200,10 +191,6 @@ jobs:
           VERSION="${{ steps.get_version.outputs.version_clean }}"
 
           cat > release_notes.md << 'EOF'
-          ## ${PROJECT_NAME} Plugin Release v${VERSION}
-
-          ### Changes
-          * Fix YAML syntax error on line 206 of .github/workflows/build.yaml (Invalid workflow file).
 
           ### Downloads by Nuke Version
           EOF
