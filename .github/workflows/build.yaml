@@ -32,7 +32,7 @@ jobs:
 
     strategy:
       matrix:
-        # CAMBIAR AQUÍ para agregar más versiones: ["12.1", "13.0", "14.0"]
+        # CAMBIAR AQUÍ para agregar más versiones: ["12.1", "13.0", "14.0"] si
         nuke_version: ["12.1"]
       fail-fast: false
 
