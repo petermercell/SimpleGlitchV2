@@ -200,24 +200,20 @@ jobs:
           VERSION="${{ steps.get_version.outputs.version_clean }}"
 
           cat > release_notes.md << 'EOF'
-          ## ${PROJECT_NAME} Plugin Release v${VERSION}
+## ${PROJECT_NAME} Plugin Release v${VERSION}
 
-          ### Changes
-          - Fix YAML syntax error on line 206 of `.github/workflows/build.yaml` (Invalid workflow file).
+### Changes
+- Fix YAML syntax error on line 206 of .github/workflows/build.yaml (Invalid workflow file).
 
-          ### Downloads by Nuke Version
-          EOF
+### Downloads by Nuke Version
+EOF
 
-          # List the ZIP files created for each Nuke version
+          # Agregar a release notes cada ZIP por plataforma
           for zipfile in release-assets/*.zip; do
             name="$(basename "$zipfile")"
-            # name example: SimpleGlitch2-Nuke12.1-Linux.zip
-            # Split: [SimpleGlitch2] - [Nuke12.1] - [Linux.zip]
-            IFS='-' read -r plugin_label nuke_label os_label_ext <<< "$name"
-            # os_label_ext incluye ".zip", así que lo quitamos
+            IFS='-' read -r _plugin_label nuke_label os_label_ext <<< "$name"
             os_label="${os_label_ext%.zip}"
-            nuke_version="${nuke_label#Nuke}"  # e.g. 12.1
-
+            nuke_version="${nuke_label#Nuke}"
             if [ "$os_label" == "Linux" ]; then
               echo "- **Linux (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
             elif [ "$os_label" == "Windows" ]; then
@@ -227,14 +223,24 @@ jobs:
 
           cat >> release_notes.md << 'EOF'
 
-          ### Installation
+### Installation
 
-          1. Download the ZIP file or plugin (`.so` / `.dll`) matching your platform and Nuke version.  
-          2. Extract or copy the binary into your Nuke plugins folder.  
-          3. Restart Nuke.
+1. Download the ZIP file or plugin (`.so` / `.dll`) matching your platform and Nuke version.  
+2. Extract or copy the binary into your Nuke plugins folder.  
+3. Restart Nuke.
 
-          ### Compatibility
+### Compatibility
 
-          - **Nuke 12.1**: Supported on Linux and Windows.  
-          - Built specifically for Nuke 12.1 (may work on newer versions).
-          EOF
+- **Nuke 12.1**: Supported on Linux and Windows.  
+- Built specifically for Nuke 12.1 (may work on newer versions).
+EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
+          name: Release ${{ steps.get_version.outputs.tag_name }}
+          body_path: release_notes.md
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
