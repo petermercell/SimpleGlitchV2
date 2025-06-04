@@ -200,38 +200,38 @@ jobs:
           VERSION="${{ steps.get_version.outputs.version_clean }}"
 
           cat > release_notes.md << 'EOF'
-          
-        ## ${PROJECT_NAME} Plugin Release v${VERSION}
+## ${PROJECT_NAME} Plugin Release v${VERSION}
 
-        ### Changes
-        - Fix YAML syntax error on line 206 of .github/workflows/build.yaml (Invalid workflow file).
+### Changes
+- Fix YAML syntax error on line 206 of .github/workflows/build.yaml (Invalid workflow file).
 
-        ### Downloads by Nuke Version
-        EOF
+### Downloads by Nuke Version
+EOF
 
-                  # Agregar a release notes cada ZIP por plataforma
-                  for zipfile in release-assets/*.zip; do
-                    name="$(basename "$zipfile")"
-                    IFS='-' read -r _plugin_label nuke_label os_label_ext <<< "$name"
-                    os_label="${os_label_ext%.zip}"
-                    nuke_version="${nuke_label#Nuke}"
-                    if [ "$os_label" == "Linux" ]; then
-                      echo "- **Linux (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
-                    elif [ "$os_label" == "Windows" ]; then
-                      echo "- **Windows (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
-                    fi
-                  done
+          # Agregar a release notes cada ZIP por plataforma
+          for zipfile in release-assets/*.zip; do
+            name="$(basename "$zipfile")"
+            IFS='-' read -r _plugin_label nuke_label os_label_ext <<< "$name"
+            os_label="${os_label_ext%.zip}"
+            nuke_version="${nuke_label#Nuke}"
+            if [ "$os_label" == "Linux" ]; then
+              echo "- **Linux (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
+            elif [ "$os_label" == "Windows" ]; then
+              echo "- **Windows (Nuke ${nuke_version})**: \`${name}\`" >> release_notes.md
+            fi
+          done
 
-                  cat >> release_notes.md << 'EOF'
+          cat >> release_notes.md << 'EOF'
 
-        ### Installation
+### Installation
 
-        1. Download the ZIP file or plugin (`.so` / `.dll`) matching your platform and Nuke version.  
-        2. Extract or copy the binary into your Nuke plugins folder.  
-        3. Restart Nuke.
+1. Download the ZIP file or plugin (`.so` / `.dll`) matching your platform and Nuke version.  
+2. Extract or copy the binary into your Nuke plugins folder.  
+3. Restart Nuke.
 
-        ### Compatibility
+### Compatibility
 
-        - **Nuke 12.1**: Supported on Linux and Windows.  
-        - Built specifically for Nuke 12.1 (may work on newer versions).
-        EOF
+- **Nuke 12.1**: Supported on Linux and Windows.  
+- Built specifically for Nuke 12.1 (may work on newer versions).
+EOF
+
