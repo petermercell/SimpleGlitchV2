@@ -40,7 +40,7 @@ jobs:
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Pull image
-        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-linux-slim-latest
+        run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-linux
 
       - name: Run build
         run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux-slim-latest bash -c "cmake3 . -B build && cmake3 --build build"
