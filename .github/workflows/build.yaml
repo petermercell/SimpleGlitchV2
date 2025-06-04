@@ -42,20 +42,20 @@ jobs:
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Debug - Check login
-        run: |
-          echo "Logged in user: ${{ github.actor }}"
-          echo "Trying to pull from: ${{ env.image }}:${{ matrix.nuke_version }}-windows"
-
-      - name: Debug - Try to list images (optional)
-        run: |
-          curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/user/packages?package_type=container
-        continue-on-error: true
-
       - name: Pull image
         run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-linux
+
+      - name: Debug - Check available cmake
+        run: |
+          echo "Checking available cmake commands..."
+          docker run --rm ${{ env.image }}:${{ matrix.nuke_version }}-linux bash -c "
+            which cmake || echo 'cmake not found'
+            which cmake3 || echo 'cmake3 not found'
+            ls /usr/bin/cmake* || echo 'no cmake in /usr/bin'
+            ls /usr/local/bin/cmake* || echo 'no cmake in /usr/local/bin'
+            cmake --version || echo 'cmake version failed'
+            cmake3 --version || echo 'cmake3 version failed'
+          "
 
       - name: Run build
         run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux bash -c "cmake3 . -B build && cmake3 --build build"
@@ -66,7 +66,7 @@ jobs:
           path: ${{ github.workspace }}/build/lib
 
   build-windows:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest # Cambio crítico: de windows-latest a ubuntu-latest
     permissions:
       contents: read
       packages: read
@@ -83,15 +83,12 @@ jobs:
       - name: Login to GitHub Container Registry
         run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Verify login
-        run: docker info
-
       - name: Pull image
         run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-windows
 
       - name: Run build
         run: |
-          docker run --rm -v "${{ github.workspace }}:C:\nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows bash -c "
+          docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-windows bash -c "
           rm -rf build &&
           source /opt/msvc/msvcenv-native.sh &&
           cmake . -G Ninja \
