@@ -45,20 +45,8 @@ jobs:
       - name: Pull image
         run: docker pull ${{ env.image }}:${{ matrix.nuke_version }}-linux
 
-      - name: Debug - Check available cmake
-        run: |
-          echo "Checking available cmake commands..."
-          docker run --rm ${{ env.image }}:${{ matrix.nuke_version }}-linux bash -c "
-            which cmake || echo 'cmake not found'
-            which cmake3 || echo 'cmake3 not found'
-            ls /usr/bin/cmake* || echo 'no cmake in /usr/bin'
-            ls /usr/local/bin/cmake* || echo 'no cmake in /usr/local/bin'
-            cmake --version || echo 'cmake version failed'
-            cmake3 --version || echo 'cmake3 version failed'
-          "
-
       - name: Run build
-        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux bash -c "cmake3 . -B build && cmake3 --build build"
+        run: docker run --rm -v "${{ github.workspace }}:/nuke_build_directory" ${{ env.image }}:${{ matrix.nuke_version }}-linux bash -c "cmake . -DNuke_ROOT=/usr/local/nuke_install -DNUKE_INSTALL_PATH=/usr/local/nuke_install -B build && cmake --build build"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -97,6 +85,8 @@ jobs:
             -DCMAKE_CXX_COMPILER=/opt/msvc/bin/x64/cl \
             -DCMAKE_LINKER=/opt/msvc/bin/x64/link \
             -DCMAKE_SYSTEM_NAME=Windows \
+            -DNuke_ROOT=/usr/local/nuke_install \
+            -DNUKE_INSTALL_PATH=/usr/local/nuke_install \
             -B build &&
           cmake --build build
           "
