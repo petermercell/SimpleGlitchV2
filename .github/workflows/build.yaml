@@ -200,7 +200,7 @@ jobs:
           PROJECT_NAME="${{ github.event.repository.name }}"
           VERSION="${{ steps.get_version.outputs.version_clean }}"
 
-          cat > release_notes.md << EOF
+          cat > release_notes.md << 'EOF'
 ## ${PROJECT_NAME} Plugin Release v${VERSION}
 
 ### Changes
@@ -227,7 +227,7 @@ EOF
             fi
           done
 
-          cat >> release_notes.md << EOF
+          cat >> release_notes.md << 'EOF'
 
 ### Installation
 
