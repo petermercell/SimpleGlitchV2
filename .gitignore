@@ -18,6 +18,10 @@
 *.stackdump
 *.debug
 
+# release
+release/
+artifacts/
+
 # CMake build files
 CMakeFiles/
 CMakeCache.txt

@@ -62,8 +62,6 @@ function(add_plugin PLUGIN_NAME)
         PREFIX ""
         SUFFIX "${NUKE_PLUGIN_EXTENSION}"
         POSITION_INDEPENDENT_CODE ON
-        CXX_STANDARD 11
-        CXX_STANDARD_REQUIRED ON
     )
     
     # Configurar directorio de salida según la plataforma

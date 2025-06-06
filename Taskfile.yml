@@ -1,0 +1,108 @@
+version: "3"
+vars:
+  PROJECT_NAME: SimpleGlitchV2
+  VERSION: v1.0.0
+  NUKE_VERSIONS: 12.1,12.2,13.0,13.1,13.2,14.0,14.1,15.0
+  PROJECT_PATH: C:/Users/rojas/OneDrive/Documents/C++ projects/SimpleGlitchV2
+  OUTPUT_DIR: artifacts
+
+tasks:
+  build-linux:
+    desc: Build Linux version for specific Nuke version
+    vars:
+      NUKE_VERSION: '{{.NUKE_VERSION | default "12.1"}}'
+    cmds:
+      - echo "Building Linux for Nuke {{.NUKE_VERSION}}"
+      - docker run --rm -v "{{.PROJECT_PATH}}:/nuke_build_directory" nukedockerbuild:{{.NUKE_VERSION}}-linux bash -c "cd /nuke_build_directory && cmake . -DNuke_ROOT=/usr/local/nuke_install -DNUKE_INSTALL_PATH=/usr/local/nuke_install -B build-linux-{{.NUKE_VERSION}} && cmake --build build-linux-{{.NUKE_VERSION}}"
+      # Crear directorio de salida y copiar archivos .so
+      - powershell -c "New-Item -ItemType Directory -Force -Path '{{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Linux'"
+      - powershell -c "if (Test-Path 'build-linux-{{.NUKE_VERSION}}/lib') { Get-ChildItem -Path 'build-linux-{{.NUKE_VERSION}}/lib' -Filter '*.so' -Recurse | Copy-Item -Destination '{{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Linux/'; Write-Host '✅ Copied .so files to {{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Linux/' } else { Write-Host '❌ No lib directory found in build-linux-{{.NUKE_VERSION}}' }"
+      # Limpiar build temporal
+      - powershell -c "if (Test-Path 'build-linux-{{.NUKE_VERSION}}') { Remove-Item -Recurse -Force 'build-linux-{{.NUKE_VERSION}}' }"
+      - echo "✅ Linux build completed and cleaned for Nuke {{.NUKE_VERSION}}"
+
+  build-windows:
+    desc: Build Windows version for specific Nuke version
+    vars:
+      NUKE_VERSION: '{{.NUKE_VERSION | default "12.1"}}'
+    cmds:
+      - echo "Building Windows for Nuke {{.NUKE_VERSION}}"
+      - docker run --rm -v "{{.PROJECT_PATH}}:/nuke_build_directory" nukedockerbuild:{{.NUKE_VERSION}}-windows bash -c "cd /nuke_build_directory && rm -rf build-windows-{{.NUKE_VERSION}} && source /opt/msvc/msvcenv-native.sh && cmake . -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/opt/msvc/bin/x64/cl -DCMAKE_CXX_COMPILER=/opt/msvc/bin/x64/cl -DCMAKE_LINKER=/opt/msvc/bin/x64/link -DCMAKE_SYSTEM_NAME=Windows -DNuke_ROOT=/usr/local/nuke_install -DNUKE_INSTALL_PATH=/usr/local/nuke_install -B build-windows-{{.NUKE_VERSION}} && cmake --build build-windows-{{.NUKE_VERSION}}"
+      # Crear directorio de salida y copiar archivos .dll
+      - powershell -c "New-Item -ItemType Directory -Force -Path '{{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Windows'"
+      - powershell -c "if (Test-Path 'build-windows-{{.NUKE_VERSION}}/lib/Release') { Get-ChildItem -Path 'build-windows-{{.NUKE_VERSION}}/lib/Release' -Filter '*.dll' -Recurse | Copy-Item -Destination '{{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Windows/'; Write-Host '✅ Copied .dll files to {{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Windows/' } elseif (Test-Path 'build-windows-{{.NUKE_VERSION}}/lib') { Get-ChildItem -Path 'build-windows-{{.NUKE_VERSION}}/lib' -Filter '*.dll' -Recurse | Copy-Item -Destination '{{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Windows/'; Write-Host '✅ Copied .dll files to {{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/Windows/' } else { Write-Host '❌ No lib directory found in build-windows-{{.NUKE_VERSION}}' }"
+      # Limpiar build temporal
+      - powershell -c "if (Test-Path 'build-windows-{{.NUKE_VERSION}}') { Remove-Item -Recurse -Force 'build-windows-{{.NUKE_VERSION}}' }"
+      - echo "✅ Windows build completed and cleaned for Nuke {{.NUKE_VERSION}}"
+
+  build-all:
+    desc: Build all versions for Linux and Windows
+    cmds:
+      - echo "🚀 Building all Nuke versions..."
+      - for: { var: NUKE_VERSIONS, split: "," }
+        task: build-linux
+        vars:
+          NUKE_VERSION: "{{.ITEM}}"
+      - for: { var: NUKE_VERSIONS, split: "," }
+        task: build-windows
+        vars:
+          NUKE_VERSION: "{{.ITEM}}"
+      - echo "📦 Final artifacts structure:"
+      - powershell -c "if (Test-Path '{{.OUTPUT_DIR}}') { Get-ChildItem -Recurse '{{.OUTPUT_DIR}}' } else { Write-Host 'No artifacts directory found' }"
+
+  build-single:
+    desc: Build single version (specify NUKE_VERSION=12.1)
+    cmds:
+      - echo "🚀 Building {{.NUKE_VERSION}} for both platforms..."
+      - task: build-linux
+        vars:
+          NUKE_VERSION: "{{.NUKE_VERSION}}"
+      - task: build-windows
+        vars:
+          NUKE_VERSION: "{{.NUKE_VERSION}}"
+      - echo "📦 Built artifacts:"
+      - powershell -c "Get-ChildItem '{{.OUTPUT_DIR}}/Nuke{{.NUKE_VERSION}}/' -Recurse"
+
+  clean:
+    desc: Clean all build and output directories
+    cmds:
+      - powershell -c "Get-ChildItem -Directory -Name 'build-*' | ForEach-Object { Remove-Item -Recurse -Force $_ }"
+      - powershell -c "if (Test-Path '{{.OUTPUT_DIR}}') { Remove-Item -Recurse -Force '{{.OUTPUT_DIR}}' }"
+      - echo "✅ Cleaned all build directories and artifacts"
+
+  clean-builds:
+    desc: Clean only build directories (keep artifacts)
+    cmds:
+      - powershell -c "Get-ChildItem -Directory -Name 'build-*' | ForEach-Object { Remove-Item -Recurse -Force $_ }"
+      - echo "✅ Cleaned build directories (kept artifacts)"
+
+  show-artifacts:
+    desc: Show final artifacts
+    cmds:
+      - echo "📦 Final artifacts:"
+      - powershell -c "if (Test-Path '{{.OUTPUT_DIR}}') { Get-ChildItem -Recurse '{{.OUTPUT_DIR}}' -Include '*.so','*.dll' } else { Write-Host 'No artifacts found' }"
+
+  package:
+    desc: Create ZIP packages from artifacts
+    cmds:
+      - powershell -c "New-Item -ItemType Directory -Force -Path 'release'"
+      - powershell -c |
+        Get-ChildItem -Directory '{{.OUTPUT_DIR}}/Nuke*' | ForEach-Object {
+        $nukeVersion = $_.Name
+        $linuxPath = Join-Path $_.FullName 'Linux'
+        $windowsPath = Join-Path $_.FullName 'Windows'
+
+        if ((Test-Path $linuxPath) -and (Get-ChildItem $linuxPath -Filter '*.so')) {
+        $zipName = "release/{{.PROJECT_NAME}}-$nukeVersion-Linux.zip"
+        Compress-Archive -Path "$linuxPath/*" -DestinationPath $zipName -Force
+        Write-Host "✅ Created $zipName"
+        }
+
+        if ((Test-Path $windowsPath) -and (Get-ChildItem $windowsPath -Filter '*.dll')) {
+        $zipName = "release/{{.PROJECT_NAME}}-$nukeVersion-Windows.zip"
+        Compress-Archive -Path "$windowsPath/*" -DestinationPath $zipName -Force
+        Write-Host "✅ Created $zipName"
+        }
+        }
+      - echo "📦 Release packages created in release/"
+      - powershell -c "Get-ChildItem 'release/'"
