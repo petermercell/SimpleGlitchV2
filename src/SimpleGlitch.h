@@ -19,10 +19,10 @@ using namespace DD::Image;
 #include "DDImage/Tile.h"
 
 static const char *const CLASS = "SimpleGlitch2";
-static const char *const HELP =
-    "This node applies a horizontal glitch effect to the image lines.";
+static const char *const HELP = "This node applies a horizontal glitch effect to the image lines.";
 
-class SimpleGlitchIop : public Iop {
+class SimpleGlitchIop : public Iop
+{
   float noise_seed;
   float noise_height;
   float noise_intensity;
@@ -31,7 +31,7 @@ class SimpleGlitchIop : public Iop {
   bool solo_effect;
   int _bbox;
 
-public:
+ public:
   // constructor
   SimpleGlitchIop(Node *node);
 
@@ -49,4 +49,4 @@ public:
   const char *node_help() const { return HELP; }
 };
 
-#endif // SIMPLEGLITCH_H
+#endif  // SIMPLEGLITCH_H
